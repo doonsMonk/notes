@@ -1,0 +1,940 @@
+﻿
+FUNCTION OVERRIDING : If derived class defines same function as defined in its base class, it is known as function overriding in C++.
+
+FUNCTION OVERLOADING : It provides multiple definitions of the function by changing signature i.e changing number of parameters, 
+change datatype of parameters, return type doesn’t play anyrole.
+
+"POLYMORPHISM" literally means "many forms". 
+
+PARAMETRIC POLYMORPHISM : is when the same code can be applied to multiple data types.
+
+AD-HOC POLYMORPHISM : is when different code is used for different data-types. Overloading falls into this category.
+Or Same data types but different code , overriding falls into this category.
+
+VIRTUAL FUCNTIONS : It is a function in base class, which is overrided in the derived class, and which tells the compiler to perform 
+Late Binding on this function.
+
+Virtual Keyword is used to make a member function of the base class Virtual. In Late Binding function call is resolved at runtime. 
+Hence, now compiler determines the type of object at runtime, and then binds the function call. Late Binding is also called Dynamic 
+Binding or Runtime Binding.
+
+We can call private function of derived class from the base class pointer with the help of virtual keyword. Compiler checks for access 
+specifier only at compile time. So at run time when late binding occurs it does not check whether we are calling the private function 
+or public function.
+
+To accomplich late binding, Compiler creates VTABLEs, for each class with virtual function. The address of virtual functions is inserted 
+into these tables. Whenever an object of such class is created the compiler secretly inserts a pointer called vpointer, pointing to 
+VTABLE for that object. Hence when function is called, compiler is able to resovle the call by binding the correct function using the 
+vpointer.
+
+Virtual functions provides a loose coupling because the program does not have to change drastically if a new concrete derived class 
+of base class is added anytime. The reason is that there are minimal code segments that actually use (depend) on the concrete type.
+
+With virtual functions we can achieve as example of the Open Closed Principle of the famous SOLID design principles.
+
+As per C++ STANDARDS: If a function in Base class is declared virtual and the same signature function is present in derived class then
+that function also becomes virtual. Doesnt matter virtual keyword is present or not.
+
+Member function templates cannot be declared virtual. This constraint is imposed because the usual implementation of the virtual 
+function call mechanism uses a fixed-size table with one entry per virtual function. However, the number of instantiations of a 
+member function template is not fixed until the entire program has been translated. Hence, supporting virtual member function templates 
+would require support for a whole new kind of mechanism in C++ compilers and linkers. In contrast, the ordinary members of class 
+templates can be virtual because their number is fixed when a class is instantiated
+
+An override in front of derived class function can help avoid bugs by producing a compilation error when the intended override isn't 
+technically an override. 
+
+Where are the Vtables created?:
+
+Depends on compiler.
+
+In VC++, the vtable pointer stored at the beginning of the object allocation, before any member data. 
+(Provided your class has at least one virtual member function.)
+
+There also may be multiple vtable pointers, if your class multiply-inherits from other classes with vtables.
+
+The vtables themselves are statically allocated somewhere in your address space.
+
+Then the object layout looks like (for an instance of C):
+
+A's VTable ptr
+A's member variables.
+B's Vtable ptr
+B's member variables.
+C's member variables.
+for the heirarchy
+
+class A {
+  virtual Ax() {}
+  int a, b;
+};
+class B {
+  virtual Bx() {}
+  int c, d;
+};
+class C : public A, public B {
+  int foo, bar;
+};
+
+Virtual Constructors:
+There is nothing like Virtual Constructor. The Constructor can’t be virtual as the constructor is a code which is responsible for creating 
+an instance of a class and it can’t be delegated to any other object by virtual keyword means.
+
+A virtual call is a mechanism to get work done given partial information. In particular, "virtual" allows us to call a function knowing 
+only any interfaces and not the exact type of the object. To create an object you need complete information. In particular, you need to 
+know the exact type of what you want to create. Consequently, a "call to a constructor" cannot be virtual.
+
+To construct an object, a constructor needs the exact type of the object it is to create. Furthermore you cannot have a pointer to a constructor.
+
+We can achieve virtual constructor behaviour from Design patters : Factory Design Pattern or Abstract Factory Design pattern.
+
+Before we jump into factory pattern lets know about Pure Virtual Functions and Abstract Classes:
+Sometimes implementation of all function cannot be provided in a base class because we don’t know the implementation. Such a class is called
+abstract class. A pure virtual function (or abstract function) in C++ is a virtual function for which we don’t have implementation, we only 
+declare it. A pure virtual function is declared by assigning 0 in declaration.
+A class is abstract if it has at least one pure virtual function.
+We can have pointers and references of abstract class type.
+If we do not override the pure virtual function in derived class, then derived class also becomes abstract class.
+An abstract class can have constructors.
+
+Factory Design Pattern:
+
+class Toy
+{
+public:
+	virtual void createparts()=0;
+	virtual void combineparts()=0;
+	virtual void assembleparts()=0;
+	virtual void applylabel()=0;
+};
+
+class biketoy: public Toy
+{
+public:
+    	void createparts() {cout<<"Creating biketoy parts";}
+	void combineparts(){cout<<"Combining biketoy parts";}
+	void assembleparts(){cout<<"Assembling biketoy parts";}
+	void applylabel(){cout<<"BikeToy complete";}  
+};
+
+class cartoy: public Toy
+{
+public:
+    	void createparts() {cout<<"Creating cartoy parts";}
+	void combineparts(){cout<<"Combining cartoy parts";}
+	void assembleparts(){cout<<"Assembling cartoy parts";}
+	void applylabel(){cout<<"cartoy complete";}  
+};
+
+class animaltoy: public Toy
+{
+public:
+    	void createparts() {cout<<"Creating animaltoy parts";}
+	void combineparts(){cout<<"Combining animaltoy parts";}
+	void assembleparts(){cout<<"Assembling animaltoy parts";}
+	void applylabel(){cout<<"animaltoy complete";}  
+};
+
+class ToyFactory
+{
+public:
+ static Toy* createtoy(int toytype)
+ {
+	Toy* ptr = NULL;
+	switch(toytype)
+	{
+	case 1:
+	ptr = new biketoy;
+	break;
+	case 2:
+	ptr = new cartoy;
+	break
+	case 3:
+	ptr = new animaltoy;
+	break;
+	deafult:
+	assert(false); // unknown toy type
+	break;
+	}
+	ptr->createparts();
+	ptr->combineparts();
+	ptr->assembleparts();
+	ptr->applylabel();
+	return ptr;
+ }
+};
+
+int main
+{
+	biketoy *newbiketoy = ToyFactory::createtoy(1);
+	cartoy *newcartoy = ToyFactory::createtoy(2);
+	animaltoy *newanimaltoy = ToyFactory::createtoy(3);
+	delete newbiketoy;
+	delete newcartoy;
+	delete newanimaltoy;
+	return 0;
+}
+
+Abstract Factory Design Pattern is factory of Factories:
+
+Conversion Constructor:
+In C++, if a class has a constructor which can be called with a single argument, then this constructor becomes conversion constructor 
+because such a constructor allows automatic conversion to the class being constructed.
+
+
+#include<iostream> 
+  
+using namespace std; 
+class Test  
+{ 
+ private: 
+   int x; 
+ public: 
+   Test(int i) {x = i;} 
+   void show() { cout<<" x = "<<x<<endl; } 
+}; 
+  
+int main() 
+{ 
+ Test t(20); 
+ t.show(); 
+ t = 30; // conversion constructor is called here. 
+ t.show(); 
+ getchar(); 
+ return 0; 
+} 
+
+
+Conversion operator:
+In C++, the programmer abstracts real world objects using classes as concrete types. Sometimes it is required to convert one concrete type 
+to another concrete type or primitive type implicitly. Conversion operators play smart role in such situations.
+class Boo
+{
+	double value;
+public:
+	Boo(double i ) {value = i;}
+	operator double()
+	{
+		return value;
+	}
+};
+Boo BooObject;
+double i = BooObject; // assigning object to variable i of type double.
+now conversion operator gets called to assign the value.
+
+Stack Unwinding:
+When an exception is thrown and control passes from a try block to a handler, the C++ run time calls destructors for all automatic objects
+constructed since the beginning of the try block. This process is called stack unwinding. The automatic objects are destroyed in reverse 
+order of their construction. (Automatic objects are local objects that have been declared auto or register, or not declared static or 
+extern. An automatic object x is deleted whenever the program exits the block in which x is declared.)
+
+If an exception is thrown during construction of an object consisting of subobjects or array elements, destructors are only called for 
+those subobjects or array elements successfully constructed before the exception was thrown. A destructor for a local static object will 
+only be called if the object was successfully constructed.
+
+If during stack unwinding a destructor throws an exception and that exception is not handled, the terminate() function is called. 
+The following example demonstrates this:
+
+#include <iostream>
+using namespace std;
+
+struct E {
+  const char* message;
+  E(const char* arg) : message(arg) { }
+};
+
+void my_terminate() {
+  cout << "Call to my_terminate" << endl;
+};
+
+struct A {
+  A() { cout << "In constructor of A" << endl; }
+  ~A() {
+    cout << "In destructor of A" << endl;
+    throw E("Exception thrown in ~A()");
+  }
+};
+
+struct B {
+  B() { cout << "In constructor of B" << endl; }
+  ~B() { cout << "In destructor of B" << endl; }
+};
+
+int main() {
+  set_terminate(my_terminate);
+
+  try {
+    cout << "In try block" << endl;
+    A a;
+    B b;
+    throw("Exception thrown in try block of main()");
+  }
+  catch (const char* e) {
+    cout << "Exception: " << e << endl;
+  }
+  catch (...) {
+    cout << "Some exception caught in main()" << endl;
+  }
+
+  cout << "Resume execution of main()" << endl;
+}
+
+The output of this example:
+In try block
+In constructor of A
+In constructor of B
+In destructor of B
+In destructor of A
+Call to my_terminate
+
+In the try block, two automatic objects are created: a and b. The try block throws an exception of type const char*. The handler 
+catch (const char* e) catches this exception. The C++ run time unwinds the stack, calling the destructors for a and b in reverse 
+order of their construction. The destructor for a throws an exception. Since there is no handler in the program that can handle 
+this exception, the C++ run time calls terminate(). (The function terminate() calls the function specified as the argument to 
+set_terminate(). In this example, terminate() has been specified to call my_terminate().)
+
+
+How can I handle a constructor that fails?
+A: throw an exception. Constructors don't have a return type, so it's not possible to use return codes. The best way to signal 
+constructor failure is therefore to throw an exception.
+
+How can I handle a destructor that fails?
+A: Write a message to a log-_le. But do not throw an exception. The C++ rule is that you mustnever throw an exception from a 
+destructor that is being called during the "stack unwinding"process of another exception. For example, if someone says throw 
+Foo(), the stack will beunwound so all the stack frames between the throw Foo() and the } catch (Foo e) { will getpopped. This is
+called stack unwinding. During stack unwinding, all the local objects in allthose stack frames are destructed. If one of those 
+destructors throws an exception (say it throws aBar object), the C++ runtime system is in a no-win situation: should it ignore 
+the Bar and end upin the } catch (Foo e) { where it was originally headed? Should it ignore the Foo and look for a }catch (Bare) 
+{ handler? There is no good answer:either choiceloses information. So the C++ language guarantees that it will call terminate() 
+at this point, andterminate() kills the process. Bang you're dead.
+
+Placement new:
+There are many uses of placement new. The simplest use is to place an object at a particularlocation in memory. This is done by 
+supplying the place as a pointer parameter to the new part of a new expression:
+
+void someCode()
+{
+char memory[sizeof(Fred)];
+void* p = memory;
+Fred* f = new(p) Fred();
+...
+f->~Fred(); // Explicitly call the destructor for the placed object
+}
+This is about the only time you ever explicitly call a destructor.
+
+Constroctors: Brace Initialization:
+
+You can use brace initialization for any class, struct, or union. If a type has a default constructor, either implicitly or 
+explicitly declared, you can use default brace initialization (with empty braces).
+
+If a class has non-default constructors, the order in which class members appear in the brace initializer is the order in which 
+the corresponding parameters appear in the constructor, not the order in which the members are declared (as with class_a in the 
+previous example). Otherwise, if the type has no declared constructor, the order in which the members appear in the brace 
+initializer is the same as the order in which they are declared; in this case, you can initialize as many of the public members 
+as you wish, but you cannot skip any member. The following example shows the order that's used in brace initialization when 
+there is no declared constructor:
+
+class class_d {  
+public:  
+    float m_float;  
+    string m_string;  
+    wchar_t m_char;  
+};  
+  
+int main()  
+{  
+    class_d d1{};  
+    class_d d1{ 4.5 };  
+    class_d d2{ 4.5, "string" };  
+    class_d d3{ 4.5, "string", 'c' };  
+  
+    class_d d4{ "string", 'c' }; // compiler error  
+    class_d d5("string", 'c', 2.0 }; // compiler error  
+}
+
+If the default constructor is explicitly declared but marked as deleted, default brace initialization cannot be used:
+class class_f {  
+public:  
+    class_f() = delete;  
+    class_f(string x): m_string { x } {}  
+    string m_string;  
+};  
+int main()  
+{  
+    class_f cf{ "hello" };  
+    class_f cf1{}; // compiler error C2280: attempting to reference a deleted function  
+}  
+
+You can use brace initialization anywhere you would typically do initialization—for example, as a function parameter or a return 
+value, or with the new keyword:
+
+class_d* cf = new class_d{4.5};
+kr->add_d({ 4.5 });  
+return { 4.5 }; 
+
+Delegating Constructors:
+
+Many classes have multiple constructors that do similar things—for example, validate parameters:
+class class_c {  
+public:  
+    int max;  
+    int min;  
+    int middle;  
+  
+    class_c() {}  
+    class_c(int my_max) {   
+        max = my_max > 0 ? my_max : 10;   
+    }  
+    class_c(int my_max, int my_min) {   
+        max = my_max > 0 ? my_max : 10;  
+        min = my_min > 0 && my_min < max ? my_min : 1;  
+    }  
+    class_c(int my_max, int my_min, int my_middle) {  
+        max = my_max > 0 ? my_max : 10;  
+        min = my_min > 0 && my_min < max ? my_min : 1;  
+        middle = my_middle < max && my_middle > min ? my_middle : 5;  
+    }  
+}; 
+
+You could reduce the repetitive code by adding a function that does all of the validation, but the code for class_c would be easier 
+to understand and maintain if one constructor could delegate some of the work to another one. To add delegating constructors, use 
+the constructor (. . .) : constructor (. . .) syntax:
+
+class class_c {  
+public:  
+    int max;  
+    int min;  
+    int middle;  
+  
+    class_c(int my_max) {   
+        max = my_max > 0 ? my_max : 10;   
+    }  
+    class_c(int my_max, int my_min) : class_c(my_max) {   
+        min = my_min > 0 && my_min < max ? my_min : 1;  
+    }  
+    class_c(int my_max, int my_min, int my_middle) : class_c (my_max, my_min){  
+        middle = my_middle < max && my_middle > min ? my_middle : 5;  
+}  
+};  
+int main() {  
+  
+    class_c c1{ 1, 3, 2 };  
+}  
+
+You can’t do member initialization in a constructor that delegates to another constructor, as shown here:
+class class_a {  
+public:  
+    class_a() {}  
+    // member initialization here, no delegate  
+    class_a(string str) : m_string{ str } {}  
+  
+    //can’t do member initialization here  
+    // error C3511: a call to a delegating constructor shall be the only member-initializer  
+    class_a(string str, double dbl) : class_a(str) , m_double{ dbl } {}  
+  
+    // only member assignment  
+    class_a(string str, double dbl) : class_a(str) { m_double = dbl; }  
+    double m_double{ 1.0 };  
+    string m_string;  
+};  
+
+Member Initializer: 
+The next example shows the use of non-static data-member initializers. Notice that if a constructor also initializes a given data member, 
+the member initializer is overridden:
+class class_a {  
+public:  
+    class_a() {}  
+    class_a(string str) : m_string{ str } {}  
+    class_a(string str, double dbl) : class_a(str) { m_double = dbl; }  
+    double m_double{ 1.0 };  
+    string m_string{ m_double < 10.0 ? "alpha" : "beta" };  
+};  
+  
+int main() {  
+    class_a a{ "hello", 2.0 };  //expect a.m_double == 2.0, a.m_string == "hello"  
+    int y = 4;  
+} 
+
+
+The constructor delegation syntax doesn't prevent the accidental creation of constructor recursion—Constructor1 calls Constructor2 which 
+calls Constructor1—and no errors are thrown until there is a stack overflow. It's your responsibility to avoid cycles.
+class class_f{  
+public:  
+    int max;  
+    int min;  
+  
+    // don't do this  
+    class_f() : class_f(6, 3){ }  
+    class_f(int my_max, int my_min) : class_f() { }  
+};  
+
+
+SOLID design principles:
+	Single Responsibility Principle
+	Open/Closed Principle
+	Liskov Substitution Principle
+	Interface Segregation Principle
+	Dependency Inversion
+
+Single Responsibility Principle: 
+A class should have one, and only one, reason to change.
+We all know that requirements change over time. Each of them also changes the responsibility of at least one class. The more responsibilities 
+your class has, the more often you need to change it. If your class implements multiple responsibilities, they are no longer independent of each other.
+You need to change your class as soon as one of its responsibilities changes. That is obviously more often than you would need to change it if it 
+had only one responsibility.
+
+That might not seem like a big deal, but it also affects all classes or components that depend on the changed class. Depending on your change, you 
+might need to update the dependencies or recompile the dependent classes even though they are not directly affected by your change. They only use one 
+of the other responsibilities implemented by your class, but you need to update them anyway.
+
+In the end, you need to change your class more often, and each change is more complicated, has more side-effects, and requires a lot more work than it 
+should have. So, it’s better to avoid these problems by making sure that each class has only one responsibility.
+
+Open/Closed Principle:
+Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.
+In object-oriented programming, the open/closed principle states "software entities should be open for extension, but closed for modification"; that 
+is, such an entity can allow its behaviour to be extended without modifying its source code. 
+
+Liskov Substitution Principle :
+In a computer program, if S is a subtype of T, then objects of type T may be replaced with objects of type S (i.e. an object of type T may be substituted 
+with any object of a subtype S) without altering any of the desirable properties of the program (correctness, task performed, etc.). 
+
+Functions that use pointers or references to base classes must be able to use objects of derived classes without knowing it.
+
+Bad example
+public class Bird{
+    public void fly(){}
+}
+public class Duck extends Bird{}
+The duck can fly because of it is a bird, But what about this:
+
+public class Ostrich extends Bird{}
+Ostrich is a bird, But it can't fly, Ostrich class is a subtype of class Bird, But it can't use the fly method, that means that we are breaking LSP principle.
+
+Good example
+public class Bird{
+}
+public class FlyingBirds extends Bird{
+    public void fly(){}
+}
+public class Duck extends FlyingBirds{}
+public class Ostrich extends Bird{} 
+
+Interface Segregation Principle :
+The Interface Segregation Principle states that clients should not be forced to implement interfaces they don't use. Instead of one fat interface many 
+small interfaces are preferred based on groups of methods, each one serving one submodule.
+
+Example:
+We have a Manager class which represent the person which manages the workers. And we have 2 types of workers some average and some very efficient workers. 
+Both types of workers works and they need a daily launch break to eat. But now some robots came in the company they work as well , but they don't eat so 
+they don't need a launch break. One on side the new Robot class need to implement the IWorker interface because robots works. On the other side, the don't 
+have to implement it because they don't eat.
+
+This is why in this case the IWorker is considered a polluted interface.
+
+// interface segregation principle - bad example
+interface IWorker {
+	public void work();
+	public void eat();
+}
+
+class Worker implements IWorker{
+	public void work() {// ....working}
+	public void eat() {// ...... eating in launch break}
+}
+
+class SuperWorker implements IWorker{
+	public void work() {//.... working much more}
+	public void eat() {//.... eating in launch break}
+}
+
+class Manager {
+	IWorker worker;
+	public void setWorker(IWorker w) {	worker=w;}
+	public void manage() {	worker.work();}
+}
+
+If we keep the present design, the new Robot class is forced to implement the eat method. We can write a dummy class which does nothing(let's say a launch 
+break of 1 second daily), and can have undesired effects in the application(For example the reports seen by managers will report more lunches taken than 
+the number of people).
+
+According to the Interface Segregation Principle, a flexible design will not have polluted interfaces. In our case the IWorker interface should be split 
+in 2 different interfaces.
+
+Following it's the code supporting the Interface Segregation Principle. By splitting the IWorker interface in 2 different interfaces the new Robot class 
+is no longer forced to implement the eat method. Also if we need another functionality for the robot like recharging we create another interface 
+IRechargeble with a method recharge.
+
+// interface segregation principle - good example
+interface IWorker extends Feedable, Workable {}
+
+interface IWorkable {
+	public void work();
+}
+
+interface IFeedable{
+	public void eat();
+}
+
+class Worker implements IWorkable, IFeedable{
+	public void work() {// ....working}
+	public void eat() {//.... eating in launch break}
+}
+
+class Robot implements IWorkable{
+	public void work() {// ....working}
+}
+
+class SuperWorker implements IWorkable, IFeedable{
+	public void work() {//.... working much more}
+	public void eat() {//.... eating in launch break}
+}
+
+class Manager {
+	Workable worker;
+	public void setWorker(Workable w) {worker=w;}
+	public void manage() {worker.work();}
+}
+
+
+Dependency Inversion:
+The Dependency Inversion Principle (DIP): High level modules should not depend upon low level modules. Both should depend upon abstractions.
+
+Imagine a world without plugs and sockets. The computer is directly soldered into an electrical wire in the wall. Whenever you buy a motherboard you also 
+get a mouse, keyboard and monitor, but they're all directly soldered onto the motherboard by the manufacturer. Everything works fine, but things get 
+complicated when you want to remove or replace anything. If you try to replace the mouse:
+
+You risk damaging the motherboard
+It takes forever to solder
+Soldering is error prone because the new mouse has different wires
+A world without plugs and sockets sounds ridiculous. Yet we programmers have a tendency to pull out the metaphorical soldering iron and hard-wire our 
+classes together as we're making them. If the classes are hard-wired together, and you want to replace one of them:
+
+You risk damaging code that uses the class
+It takes forever to find and change every place that the class is used
+Inserting the replacement class is error prone because it is slightly different to the old class
+The Dependency Inversion Principle is basically a way of adding plugs and sockets to your code. It allows you to create your high level modules (the 
+computer) independent of the low level modules (the mouse). The low level modules can be created later, and are easily replaceable.
+
+Plugs in c++ are generally base classes with virtual methods; templating; possibly preprocessor function macros.
+The plug is essentially an abstract interface. Any class can implement or inherit the abstract interface. Here is an example in C++:
+
+//This is the "plug" (abstract base class)
+class Exporter {
+public:
+    //pure virtual (not implemented)
+    virtual String convertDocumentToString(Document* doc) = 0;
+};
+
+//This is a concrete class that implements the "plug"
+class CSVExporter : public Exporter {
+public:
+    //concrete implementation
+    String convertDocumentToString(Document* doc);
+};
+
+
+//Another concrete class that implements the "plug"
+class XMLExporter : public Exporter {
+public:
+    //concrete implementation
+    String convertDocumentToString(Document* doc);
+};
+
+The "sockets" are any functions or classes that use a "plug". Continuing from the above code example, below is an example of a "socket" class.
+//Class with an Exporter "socket"
+class ExportController {
+private:
+    Exporter* m_exporter;
+public:
+    //this is the socket that accepts Exporter plugs
+    void setExporter(Exporter* exporter);
+    void runExport();
+};
+
+// ... (code omitted)
+
+void ExportController::runExport()
+{
+    Document* currentDocument = GetCurrentDocument();
+    String exportedString = m_exporter->convertDocumentToString(currentDocument);
+    String exportFilePath = GetSaveFilePath();
+    WriteStringToFile(exporterString, exportFilePath);
+}
+
+n the above example, the ExportController is the "higher level" module and all the Exporter subclasses are the "lower level" modules. This is because 
+ExportController uses the Exporter subclasses, and not the other way around. The application of the DIP means that ExportController has no knowledge of 
+CSVExporter, XMLExporter, or any other Exporter subclass. It only knows about the abstract Exporter interface.
+
+Named Constructor Idiom or Just Names Constructors:
+The problem is that constructors always have the same name as the class. Therefore the only way to differentiate between the various constructors of a 
+class is by the parameter list. But if there are lots of constructors, the differences between them become somewhat subtle and error prone.
+
+With the Named Constructor Idiom, you declare all the class's constructors in the private or protected sections, and you provide public static methods 
+that return an object. These static methods are the so-called "Named Constructors." In general there is one such static method for each different way 
+to construct an object.
+
+Inheritance:
+Inheritance allows one class to reuse the state and behavior of another class. The derived class inherits the properties and method implementations of 
+the base class and extends it by overriding methods and adding additional properties and methods.
+
+Object Slicing in C++:
+In C++, a derived class object can be assigned to a base class object, but the other way is not possible.
+Object slicing happens when a derived class object is assigned to a base class object, additional attributes of a derived class object are sliced off 
+to form the base class object.
+
+#include <iostream> 
+using namespace std; 
+
+class Base 
+{ 
+protected: 
+	int i; 
+public: 
+	Base(int a)	 { i = a; } 
+	virtual void display() 
+	{ cout << "I am Base class object, i = " << i << endl; } 
+}; 
+
+class Derived : public Base 
+{ 
+	int j; 
+public: 
+	Derived(int a, int b) : Base(a) { j = b; } 
+	virtual void display() 
+	{ cout << "I am Derived class object, i = "
+		<< i << ", j = " << j << endl; } 
+}; 
+
+// Global method, Base class object is passed by value 
+void somefunc (Base obj) 
+{ 
+	obj.display(); 
+} 
+
+int main() 
+{ 
+	Base b(33); 
+	Derived d(45, 54); 
+	somefunc(b); 
+	somefunc(d); // Object Slicing, the member j of d is sliced off 
+	return 0; 
+} 
+
+Output:
+
+I am Base class object, i = 33
+I am Base class object, i = 45
+
+We can avoid above unexpected behavior with the use of pointers or references. Object slicing doesn’t occur when pointers or references to objects are 
+passed as function arguments since a pointer or reference of any type takes same amount of memory. For example, if we change the global method myfunc() 
+in the above program to following, object slicing doesn’t happen.
+
+// rest of code is similar to above 
+void somefunc (Base &obj) 
+{ 
+	obj.display(); 
+}		 
+// rest of code is similar to above 
+
+We get the same output if we use pointers and change the program to following.
+
+// rest of code is similar to above 
+void somefunc (Base *objp) 
+{ 
+	objp->display(); 
+} 
+
+int main() 
+{ 
+	Base *bp = new Base(33) ; 
+	Derived *dp = new Derived(45, 54); 
+	somefunc(bp); 
+	somefunc(dp); // No Object Slicing 
+	return 0; 
+} 
+
+Output:
+
+I am Base class object, i = 33
+I am Derived class object, i = 45, j = 54
+Object slicing can be prevented by making the base class function pure virtual there by disallowing object creation. It is not possible to create the 
+object of a class which contains a pure virtual method.
+
+A FUNCTION is a piece of code that is called by name. It can be passed data to operate on (i.e. the parameters) and can optionally return data (the 
+return value). All data that is passed to a function is explicitly passed.
+
+A METHOD is a piece of code that is called by a name that is associated with an object. In most respects it is identical to a function except for two 
+key differences:
+A method is implicitly passed the object on which it was called.
+A method is able to operate on data that is contained within the class (remembering that an object is an instance of a class - the class is the 
+definition, the object is an instance of that data).
+
+Explain the ISA and HASA class relationships. How would you implement each in a class design?
+A: A specialized class "is" a specialization of another class and, therefore, has the ISArelationship with the other class. This relationship is best 
+implemented by embedding an object of the Salary class in the Employee class.
+
+Function overloading and const keyword:
+
+#include<iostream> 
+using namespace std; 
+
+class Test 
+{ 
+protected: 
+	int x; 
+public: 
+	Test (int i):x(i) { } 
+	void fun() const{cout << "fun() const called " << endl;	} 
+	void fun() {cout << "fun() called " << endl;} 
+}; 
+
+int main() 
+{ 
+	Test t1 (10); 
+	const Test t2 (20); 
+	t1.fun(); 
+	t2.fun(); 
+	return 0; 
+} 
+
+Output: The above program compiles and runs fine, and produces following output.
+
+fun() called
+fun() const called
+
+The two methods ‘void fun() const’ and ‘void fun()’ have same signature except that one is const and other is not. Also, if we take a closer look at the 
+output, we observe that, ‘const void fun()’ is called on const object and ‘void fun()’ is called on non-const object. C++ allows member methods to be 
+overloaded on the basis of const type. Overloading on the basis of const type can be useful when a function return reference or pointer. We can make one 
+function const, that returns a const reference or const pointer, other non-const function, that returns non-const reference or pointer.
+
+What about parameters?
+Rules related to const parameters are interesting. Let us first take a look at following two examples. The program 1 fails in compilation, but program 2 
+compiles and runs fine.
+
+// PROGRAM 1 (Fails in compilation) 
+#include<iostream> 
+using namespace std; 
+
+void fun(const int i) { cout << "fun(const int) called "; } 
+void fun(int i) { cout << "fun(int ) called " ; } 
+int main() { 
+	const int i = 10; 
+	fun(i); 
+	return 0; 
+} 
+
+Output:
+
+Compiler Error: redefinition of 'void fun(int)'
+
+// PROGRAM 2 (Compiles and runs fine) 
+#include<iostream> 
+using namespace std; 
+
+void fun(char *a) { cout << "non-const fun() " << a; } 
+
+void fun(const char *a) { cout << "const fun() " << a; } 
+
+int main() 
+{ 
+const char *ptr = "GeeksforGeeks"; 
+fun(ptr); 
+return 0; 
+} 
+
+Output:
+
+const fun() GeeksforGeeks
+
+C++ allows functions to be overloaded on the basis of const-ness of parameters only if the const parameter is a reference or a pointer. That is why the program 1 
+failed in compilation, but the program 2 worked fine. This rule actually makes sense. In program 1, the parameter ‘i’ is passed by value, so ‘i’ in fun() is a 
+copy of ‘i’ in main(). Hence fun() cannot modify ‘i’ of main(). Therefore, it doesn’t matter whether ‘i’ is received as a const parameter or normal parameter. 
+When we pass by reference or pointer, we can modify the value referred or pointed, so we can have two versions of a function, one which can modify the referred 
+or pointed value, other which can not.
+
+Argument Dependant Lookup:
+Koenig Lookup, or Argument Dependent Lookup, describes how unqualified names are looked up by the compiler in C++.
+
+You don’t have to qualify the namespace for functions if one or more argument types are defined in the namespace of the function.
+A simple code example:
+
+namespace MyNamespace
+{
+    class MyClass {};
+    void doSomething(MyClass);
+}
+
+MyNamespace::MyClass obj; // global object
+
+
+int main()
+{
+    doSomething(obj); // Works Fine - MyNamespace::doSomething() is called.
+}
+
+
+Koenig Lookup, or Argument Dependent Lookup, describes how unqualified names are looked up by the compiler in C++.
+
+The C++11 standard § 3.4.2/1 states:
+
+When the postfix-expression in a function call (5.2.2) is an unqualified-id, other namespaces not considered during the usual unqualified lookup (3.4.1) may be 
+searched, and in those namespaces, namespace-scope friend function declarations (11.3) not otherwise visible may be found. These modifications to the search 
+depend on the types of the arguments (and for template template arguments, the namespace of the template argument).
+
+In simpler terms:
+You don’t have to qualify the namespace for functions if one or more argument types are defined in the namespace of the function.
+In Koenig Lookup, if a function is called without specifying its namespace, then the name of a function is also searched in namespace(s) in which the type of the 
+argument(s) is defined. That is why it is also known as Argument-Dependent name Lookup, in short simply ADL.
+
+A simple code example:
+
+namespace MyNamespace
+{
+    class MyClass {};
+    void doSomething(MyClass);
+}
+
+MyNamespace::MyClass obj; // global object
+
+
+int main()
+{
+    doSomething(obj); // Works Fine - MyNamespace::doSomething() is called.
+}
+In the above example there is neither a using-declaration nor a using-directive but still the compiler correctly identifies the unqualified name doSomething() as 
+the function declared in namespace MyNamespace by applying Koenig lookup.
+
+How does it work?
+The algorithm tells the compiler to not just look at local scope, but also the namespaces that contain the argument's type. Thus, in the above code, the compiler 
+finds that the object obj, which is the argument of the function doSomething(), belongs to the namespace MyNamespace. So, it looks at that namespace to locate the 
+declaration of doSomething().
+
+What is the advantage of Koenig lookup?
+As the simple code example above demonstrates above, Koenig lookup provides convenience and ease of usage to the programmer. Without Koenig lookup there would be 
+an overhead on the programmer, to repeatedly specify the fully qualified names, or instead, use numerous using-declarations.
+
+Why the criticism of Koenig lookup?
+Over-reliance on Koenig lookup can lead to semantic problems, and catch the programmer off guard sometimes.
+
+Consider the example of std::swap, which is a standard library algorithm to swap two values. With the Koenig lookup one would have to be cautious while using this 
+algorithm because:
+
+std::swap(obj1,obj2);
+may not show the same behavior as:
+
+using std::swap;
+swap(obj1, obj2);
+With ADL, which version of swap function gets called would depend on the namespace of the arguments passed to it.
+
+If there exists an namespace A and if A::obj1, A::obj2 & A::swap() exist then the second example will result in a call to A::swap(), which might not be what the 
+user wanted.
+
+Further, if for some reason both A::swap(A::MyClass&, A::MyClass&) and std::swap(A::MyClass&, A::MyClass&) are defined, then the first example will call 
+std::swap(A::MyClass&, A::MyClass&) but the second will not compile because swap(obj1, obj2) would be ambiguous.
+
+Trivia:
+Why is it called “Koenig lookup”?
+Because it was devised by former AT&T and Bell Labs researcher and programmer, Andrew Koenig.
+
+Curiously Recurring Template Pattern: CRTP
